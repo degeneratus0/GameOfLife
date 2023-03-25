@@ -1,20 +1,69 @@
-﻿namespace GameOfLife
+﻿using System.Drawing;
+
+namespace GameOfLife
 {
     public class Configs
     {
-        public static readonly List<(int, int)> GosperGun = new List<(int, int)>
+        public static readonly List<Point> GosperGun = new List<Point>
         {
-            (5, 1), (6, 1), (5, 2), (6, 2),
-            (5, 11), (6, 11), (7, 11), (4, 12), (8, 12), (3, 13), (9, 13), (3, 14), (9, 14), (6, 15), (4, 16), (8, 16), (5, 17), (6, 17), (7, 17), (6, 18),
-            (3, 21), (4, 21), (5, 21), (3, 22), (4, 22), (5, 22), (2, 23), (6, 23), (1, 25), (2, 25), (6, 25), (7, 25),
-            (4, 35), (5, 35), (4, 36), (5, 36)
+            new Point (5, 1),
+            new Point (6, 1),
+            new Point (5, 2),
+            new Point (6, 2),
+
+            new Point (5, 11), 
+            new Point (6, 11), 
+            new Point (7, 11),
+            new Point (4, 12),
+            new Point (8, 12),
+            new Point (3, 13),
+            new Point (9, 13),
+            new Point (3, 14),
+            new Point (9, 14),
+            new Point (6, 15),
+            new Point (4, 16),
+            new Point (8, 16),
+            new Point (5, 17), 
+            new Point (6, 17), 
+            new Point (7, 17), 
+            new Point (6, 18),
+            
+            new Point (3, 21),
+            new Point (4, 21),
+            new Point (5, 21),
+            new Point (3, 22),
+            new Point (4, 22),
+            new Point (5, 22),
+            new Point (2, 23),
+            new Point (6, 23),
+            new Point (1, 25),
+            new Point (2, 25),
+            new Point (6, 25), 
+            new Point (7, 25),
+            
+            new Point (4, 35),
+            new Point (5, 35),
+            new Point (4, 36),
+            new Point (5, 36)
         };
 
-        public static readonly List<(int, int)> Glider = new List<(int, int)> { (5, 5), (5, 6), (5, 7), (4, 7), (3, 6) };
+        public static readonly List<Point> Glider = new List<Point> {
+            new Point (5, 5),
+            new Point (5, 6),
+            new Point (5, 7),
+            new Point (4, 7),
+            new Point (3, 6)
+        };
 
-        public static List<(int, int)> GetRPentomino(int n)
+        public static List<Point> GetRPentomino(int n)
         {
-            return new List<(int, int)> { (n / 2, n / 2), (n / 2 + 1, n / 2), (n / 2, n / 2 - 1), (n / 2, n / 2 - 2), (n / 2 - 1, n / 2 - 1) };
+            return new List<Point> {
+                new Point (n / 2, n / 2),
+                new Point (n / 2 + 1, n / 2),
+                new Point (n / 2, n / 2 - 1),
+                new Point (n / 2, n / 2 - 2),
+                new Point (n / 2 - 1, n / 2 - 1)
+            };
         }
     }
 }
