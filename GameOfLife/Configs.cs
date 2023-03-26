@@ -6,45 +6,45 @@ namespace GameOfLife
     {
         public static readonly List<Point> GosperGun = new List<Point>
         {
-            new Point (5, 1),
-            new Point (6, 1),
-            new Point (5, 2),
-            new Point (6, 2),
+            new Point (1, 5),
+            new Point (1, 6),
+            new Point (2, 5),
+            new Point (2, 6),
 
-            new Point (5, 11),
-            new Point (6, 11),
-            new Point (7, 11),
-            new Point (4, 12),
-            new Point (8, 12),
-            new Point (3, 13),
-            new Point (9, 13),
-            new Point (3, 14),
-            new Point (9, 14),
-            new Point (6, 15),
-            new Point (4, 16),
-            new Point (8, 16),
-            new Point (5, 17),
-            new Point (6, 17),
-            new Point (7, 17),
-            new Point (6, 18),
+            new Point (11, 5),
+            new Point (11, 6),
+            new Point (11, 7),
+            new Point (12, 4),
+            new Point (12, 8),
+            new Point (13, 3),
+            new Point (13, 9),
+            new Point (14, 3),
+            new Point (14, 9),
+            new Point (15, 6),
+            new Point (16, 4),
+            new Point (16, 8),
+            new Point (17, 5),
+            new Point (17, 6),
+            new Point (17, 7),
+            new Point (18, 6),
 
-            new Point (3, 21),
-            new Point (4, 21),
-            new Point (5, 21),
-            new Point (3, 22),
-            new Point (4, 22),
-            new Point (5, 22),
-            new Point (2, 23),
-            new Point (6, 23),
-            new Point (1, 25),
-            new Point (2, 25),
-            new Point (6, 25),
-            new Point (7, 25),
+            new Point (21, 3),
+            new Point (21, 4),
+            new Point (21, 5),
+            new Point (22, 3),
+            new Point (22, 4),
+            new Point (22, 5),
+            new Point (23, 2),
+            new Point (23, 6),
+            new Point (25, 1),
+            new Point (25, 2),
+            new Point (25, 6),
+            new Point (25, 7),
 
-            new Point (4, 35),
-            new Point (5, 35),
-            new Point (4, 36),
-            new Point (5, 36)
+            new Point (35, 4),
+            new Point (35, 5),
+            new Point (36, 4),
+            new Point (36, 5)
         };
 
         public static List<Point> GetGlider(int n)
@@ -65,10 +65,27 @@ namespace GameOfLife
             int halfN = n / 2;
             return new List<Point> {
                 new Point (halfN, halfN),
-                new Point (halfN + 1, halfN),
-                new Point (halfN, halfN - 1),
-                new Point (halfN, halfN - 2),
+                new Point (halfN, halfN + 1),
+                new Point (halfN - 1, halfN),
+                new Point (halfN - 2, halfN),
                 new Point (halfN - 1, halfN - 1)
+            };
+        }
+
+        public static List<Point> GetSpaceship(int n)
+        {
+
+            int halfN = n / 2;
+            return new List<Point> {
+                new Point (halfN, halfN),
+                new Point (halfN, halfN + 2),
+                new Point (halfN + 1, halfN + 3),
+                new Point (halfN + 2, halfN + 3),
+                new Point (halfN + 3, halfN + 3),
+                new Point (halfN + 4, halfN + 3),
+                new Point (halfN + 4, halfN + 2),
+                new Point (halfN + 4, halfN + 1),
+                new Point (halfN + 3, halfN)
             };
         }
     }

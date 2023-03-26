@@ -10,12 +10,14 @@ namespace GameOfLife
         private static Cell[,] PreviousField;
         private static HashSet<Point> CellsToCheck;
 
+        private static bool IsOpen = false;
+
         public static void Start()
         {
             Generation = 0;
             CellsToCheck = new HashSet<Point>();
             FieldSize = GetFieldSize();
-            HashSet<Point> LivingCells = GetInput();
+            HashSet<Point> livingCells = GetInput();
 
             Console.SetWindowSize(
                 FieldSize * 2 + 10 > Console.LargestWindowWidth ? Console.LargestWindowWidth : FieldSize * 2 + 10,
@@ -24,8 +26,8 @@ namespace GameOfLife
             Field = InitField();
             PreviousField = InitField();
 
-            Field = InitAliveCells(LivingCells, Field);
-            FillCellsToCheck(LivingCells, Field);
+            Field = InitAliveCells(livingCells, Field);
+            FillCellsToCheck(livingCells, Field);
 
             Console.Clear();
             PrintField(Field);
@@ -84,10 +86,13 @@ namespace GameOfLife
         private static HashSet<Point> GetInput()
         {
             Console.WriteLine($"Field size: {FieldSize}");
-            Console.WriteLine("Enter alive cells coords separated with space, type '-' to end");
+            Console.WriteLine($"Field type: {(IsOpen ? "open" : "closed")}");
+            Console.WriteLine("Enter F to change field type");
+            Console.WriteLine("Enter alive cells coordinates separated with space, type '-' to end");
             Console.WriteLine("Enter G for glider preset");
             Console.WriteLine("Enter GG for Gosper glider gun preset");
             Console.WriteLine("Enter R for R-Pentomino preset");
+            Console.WriteLine("Enter L for Spaceship preset");
             HashSet<Point> inputs = new HashSet<Point>();
             while (true)
             {
@@ -102,6 +107,12 @@ namespace GameOfLife
                         return Configs.GosperGun.ToHashSet();
                     case "r":
                         return Configs.GetRPentomino(FieldSize).ToHashSet();
+                    case "l":
+                        return Configs.GetSpaceship(FieldSize).ToHashSet();
+                    case "f":
+                        IsOpen = !IsOpen;
+                        Console.WriteLine($"Field type changed to: {(IsOpen ? "open" : "closed")}");
+                        continue;
                 }
                 if (int.TryParse(input?.First(), out int first) && int.TryParse(input?.Last(), out int last))
                 {
@@ -117,11 +128,11 @@ namespace GameOfLife
         private static Cell[,] InitField()
         {
             Cell[,] cells = new Cell[FieldSize, FieldSize];
-            for (int i = 0; i < FieldSize; i++)
+            for (int y = 0; y < FieldSize; y++)
             {
-                for (int j = 0; j < FieldSize; j++)
+                for (int x = 0; x < FieldSize; x++)
                 {
-                    cells[i, j] = new Cell(i, j);
+                    cells[x, y] = new Cell(x, y);
                 }
             }
             return cells;
@@ -138,14 +149,14 @@ namespace GameOfLife
 
         private static void ModifyField(Cell[,] field, Cell[,] prevField)
         {
-            for (int i = 0; i < FieldSize; i++)
+            for (int y = 0; y < FieldSize; y++)
             {
-                for (int j = 0; j < FieldSize; j++)
+                for (int x = 0; x < FieldSize; x++)
                 {
-                    if (field[i, j].State != prevField[i, j].State)
+                    if (field[x, y].State != prevField[x, y].State)
                     {
-                        Console.SetCursorPosition(j * 2, i);
-                        PrintWithGrid(field[i, j]);
+                        Console.SetCursorPosition(x * 2, y);
+                        PrintWithGrid(field[x, y]);
                     }
                 }
             }
@@ -154,11 +165,11 @@ namespace GameOfLife
 
         private static void PrintField(Cell[,] field)
         {
-            for (int i = 0; i < FieldSize; i++)
+            for (int y = 0; y < FieldSize; y++)
             {
-                for (int j = 0; j < FieldSize; j++)
+                for (int x = 0; x < FieldSize; x++)
                 {
-                    PrintWithGrid(field[i, j]);
+                    PrintWithGrid(field[x, y]);
                 }
                 Console.WriteLine();
             }
@@ -270,14 +281,35 @@ namespace GameOfLife
 
         private static void IterateThroughSurroundingCells(Point coords, Action<Point> action)
         {
-            for (int k = coords.X - 1; k <= coords.X + 1; k++)
+            for (int x = coords.X - 1; x <= coords.X + 1; x++)
             {
-                for (int m = coords.Y - 1; m <= coords.Y + 1; m++)
+                for (int y = coords.Y - 1; y <= coords.Y + 1; y++)
                 {
-                    if (k >= 0 && m >= 0 && k < FieldSize && m < FieldSize)
+                    Point point = new Point(x, y);
+                    if (IsOpen)
                     {
-                        action(new Point(k, m));
+                        if (x < 0)
+                        {
+                            point.X = FieldSize - 1;
+                        }
+                        else if (x >= FieldSize)
+                        {
+                            point.X = 0;
+                        }
+                        if (y < 0)
+                        {
+                            point.Y = FieldSize - 1;
+                        }
+                        else if (y >= FieldSize)
+                        {
+                            point.Y = 0;
+                        }
                     }
+                    else if (x < 0 || y < 0 || x >= FieldSize || y >= FieldSize)
+                    {
+                        continue;
+                    }
+                    action(point);
                 }
             }
         }
