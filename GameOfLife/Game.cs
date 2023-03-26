@@ -8,34 +8,36 @@ namespace GameOfLife
         private static int Generation;
         private static Cell[,] Field;
         private static Cell[,] PreviousField;
-        private static List<Point> CellsToCheck = new List<Point>();
+        private static HashSet<Point> CellsToCheck;
 
         public static void Start()
         {
             Generation = 0;
-
+            CellsToCheck = new HashSet<Point>();
             FieldSize = GetFieldSize();
-            List<Point> LivingCells = GetInput();
+            HashSet<Point> LivingCells = GetInput();
 
             Console.SetWindowSize(
                 FieldSize * 2 + 10 > Console.LargestWindowWidth ? Console.LargestWindowWidth : FieldSize * 2 + 10,
                 FieldSize + 10 > Console.LargestWindowHeight ? Console.LargestWindowHeight : FieldSize + 10);
 
-            InitField(ref Field);
-            InitField(ref PreviousField);
+            Field = InitField();
+            PreviousField = InitField();
+
             Field = InitAliveCells(LivingCells, Field);
-            InitCellsToCheck(LivingCells, Field);
+            FillCellsToCheck(LivingCells, Field);
 
             Console.Clear();
             PrintField(Field);
             while (true)
             {
+                Console.CursorVisible = false;
                 ModifyField(Field, PreviousField);
 
                 Console.WriteLine($"Generation: {Generation}");
                 Console.WriteLine($"Press Z to start over");
                 Console.WriteLine($"Press X to reprint the field");
-                Console.WriteLine($"Press any other key to continue");
+                Console.WriteLine($"Press any other key for next generation");
                 ConsoleKey key = Console.ReadKey(true).Key;
                 if (key == ConsoleKey.Z)
                 {
@@ -50,6 +52,7 @@ namespace GameOfLife
                         continue;
                 }
 
+                Console.CursorVisible = true;
                 PreviousField = Field;
                 Field = CalculateNextGen(Field);
                 Generation++;
@@ -71,21 +74,21 @@ namespace GameOfLife
                 {
                     return result;
                 }
-                else 
-                { 
+                else
+                {
                     Console.WriteLine("Wrong format!");
                 }
             }
         }
 
-        private static List<Point> GetInput()
+        private static HashSet<Point> GetInput()
         {
             Console.WriteLine($"Field size: {FieldSize}");
             Console.WriteLine("Enter alive cells coords separated with space, type '-' to end");
             Console.WriteLine("Enter G for glider preset");
             Console.WriteLine("Enter GG for Gosper glider gun preset");
             Console.WriteLine("Enter R for R-Pentomino preset");
-            List<Point> inputs = new List<Point>();
+            HashSet<Point> inputs = new HashSet<Point>();
             while (true)
             {
                 string[]? input = Console.ReadLine()?.Split(' ');
@@ -94,15 +97,15 @@ namespace GameOfLife
                     case "-":
                         return inputs;
                     case "g":
-                        return Configs.Glider;
+                        return Configs.GetGlider(FieldSize).ToHashSet();
                     case "gg":
-                        return Configs.GosperGun;
+                        return Configs.GosperGun.ToHashSet();
                     case "r":
-                        return Configs.GetRPentomino(FieldSize);
+                        return Configs.GetRPentomino(FieldSize).ToHashSet();
                 }
                 if (int.TryParse(input?.First(), out int first) && int.TryParse(input?.Last(), out int last))
                 {
-                    inputs.Add(new Point(first, last));
+                    inputs.Add(new Point(first - 1, last - 1));
                 }
                 else
                 {
@@ -111,9 +114,9 @@ namespace GameOfLife
             }
         }
 
-        private static void InitField(ref Cell[,] cells)
+        private static Cell[,] InitField()
         {
-            cells = new Cell[FieldSize, FieldSize];
+            Cell[,] cells = new Cell[FieldSize, FieldSize];
             for (int i = 0; i < FieldSize; i++)
             {
                 for (int j = 0; j < FieldSize; j++)
@@ -121,23 +124,16 @@ namespace GameOfLife
                     cells[i, j] = new Cell(i, j);
                 }
             }
+            return cells;
         }
 
-        private static Cell[,] InitAliveCells(List<Point> aliveCells, Cell[,] field)
+        private static Cell[,] InitAliveCells(HashSet<Point> aliveCells, Cell[,] field)
         {
             foreach (Point coords in aliveCells)
             {
                 field[coords.X, coords.Y].State = State.Alive;
             }
             return field;
-        }
-
-        private static void InitCellsToCheck(List<Point> aliveCells, Cell[,] currentfield)
-        {
-            foreach (Point coords in aliveCells)
-            {
-                CheckNearCells(coords, currentfield, true);
-            }
         }
 
         private static void ModifyField(Cell[,] field, Cell[,] prevField)
@@ -170,14 +166,7 @@ namespace GameOfLife
 
         private static void PrintWithGrid(Cell cell)
         {
-            if (cell.State == State.Dead)
-            {
-                Console.BackgroundColor = ConsoleColor.DarkBlue;
-            }
-            else
-            {
-                Console.BackgroundColor = ConsoleColor.DarkRed;
-            }
+            DetermineConsoleColor(cell);
             if (cell.Coords.X == 0)
             {
                 Console.Write($"{cell.Coords.Y + 1, 2}");
@@ -193,62 +182,103 @@ namespace GameOfLife
             Console.ResetColor();
         }
 
-        private static Cell[,] CalculateNextGen(Cell[,] currentField)
+        private static void DetermineConsoleColor(Cell cell)
         {
-            List<Point> cellsToCheck = CellsToCheck.OrderBy(x => x.X).ThenBy(x => x.Y).Select(x => x).ToList();
-            Cell[,] modifiedField = new Cell[FieldSize, FieldSize];
-            InitField(ref modifiedField);
-            foreach (Point coords in cellsToCheck)
+            if (cell.State == State.Dead)
             {
-                modifiedField[coords.X, coords.Y].State = currentField[coords.X, coords.Y].State;
-                Cell currentModifiedCell = modifiedField[coords.X, coords.Y];
-                Cell currentCell = currentField[coords.X, coords.Y];
-                int aliveCellsAround = CheckNearCells(coords, currentField, false);
-                if (currentCell.State == State.Dead && aliveCellsAround == 3)
+                Console.BackgroundColor = ConsoleColor.DarkBlue;
+            }
+            if (cell.Coords.X == 0)
+            {
+                if (cell.Coords.Y % 2 == 1)
                 {
-                    currentModifiedCell.State = State.Alive;
-                }
-                else if (currentCell.State == State.Alive && !(aliveCellsAround == 2 || aliveCellsAround == 3))
-                {
-                    currentModifiedCell.State = State.Dead;
+                    Console.BackgroundColor = ConsoleColor.Blue;
                 }
             }
-            CellsToCheck.Clear();
-            foreach (Point coords in cellsToCheck)
+            else if (cell.Coords.Y == 0)
             {
-                CheckNearCells(coords, modifiedField, true);
+                if (cell.Coords.X % 2 == 1)
+                {
+                    Console.BackgroundColor = ConsoleColor.Blue;
+                }
             }
-            return modifiedField;
+            if (cell.State == State.Alive)
+            {
+                Console.BackgroundColor = ConsoleColor.DarkRed;
+            }
         }
 
-        private static int CheckNearCells(Point cellCoords, Cell[,] currentField, bool AddCellToCheck)
+        private static Cell[,] CalculateNextGen(Cell[,] currentField)
+        {
+            HashSet<Point> cellsToCheck = new HashSet<Point>(CellsToCheck);
+            CellsToCheck.Clear();
+
+            Cell[,] nextField = InitField();
+
+            foreach (Point coords in cellsToCheck)
+            {
+                nextField[coords.X, coords.Y].State = currentField[coords.X, coords.Y].State;
+                Cell currentModifiedCell = nextField[coords.X, coords.Y];
+                Cell currentCell = currentField[coords.X, coords.Y];
+
+                int aliveCellsAround = CheckNearCells(coords, currentField);
+                currentModifiedCell.State = DetermineCellState(currentCell.State, aliveCellsAround);
+            }
+            FillCellsToCheck(cellsToCheck, nextField);
+            return nextField;
+        }
+
+        private static State DetermineCellState(State state, int aliveCellsAround)
+        {
+            if (state == State.Dead && aliveCellsAround == 3)
+            {
+                return State.Alive;
+            }
+            else if (state == State.Alive && !(aliveCellsAround == 2 || aliveCellsAround == 3))
+            {
+                return State.Dead;
+            }
+            else
+            {
+                return state;
+            }
+        }
+
+        private static int CheckNearCells(Point cellCoords, Cell[,] field)
         {
             int aliveCellsAround = 0;
-            for (int k = cellCoords.X - 1; k <= cellCoords.X + 1; k++)
+            IterateThroughSurroundingCells(cellCoords, (p) =>
             {
-                for (int m = cellCoords.Y - 1; m <= cellCoords.Y + 1; m++)
-                {                    
-                    if (k >= 0 && m >= 0 && k < FieldSize && m < FieldSize)
-                    {
-                        if (AddCellToCheck && currentField[cellCoords.X, cellCoords.Y].State == State.Alive)
-                        {
-                            AddCellToCheckIfNotContains(new Point(k, m));
-                        }
-                        if (!(k == cellCoords.X && m == cellCoords.Y) && currentField[k, m].State == State.Alive)
-                        {
-                            aliveCellsAround++;
-                        }
-                    }
+                if (!(p.X == cellCoords.X && p.Y == cellCoords.Y) && field[p.X, p.Y].State == State.Alive)
+                {
+                    aliveCellsAround++;
                 }
-            }
+            });
             return aliveCellsAround;
         }
 
-        private static void AddCellToCheckIfNotContains(Point coords)
+        private static void FillCellsToCheck(HashSet<Point> previousCellsToCheck, Cell[,] field)
         {
-            if (!CellsToCheck.Contains(coords))
+            foreach (Point coords in previousCellsToCheck)
             {
-                CellsToCheck.Add(coords);
+                if (field[coords.X, coords.Y].State == State.Alive)
+                {
+                    IterateThroughSurroundingCells(coords, (p) => CellsToCheck.Add(p));
+                }
+            }
+        }
+
+        private static void IterateThroughSurroundingCells(Point coords, Action<Point> action)
+        {
+            for (int k = coords.X - 1; k <= coords.X + 1; k++)
+            {
+                for (int m = coords.Y - 1; m <= coords.Y + 1; m++)
+                {
+                    if (k >= 0 && m >= 0 && k < FieldSize && m < FieldSize)
+                    {
+                        action(new Point(k, m));
+                    }
+                }
             }
         }
     }
